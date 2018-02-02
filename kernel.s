@@ -51,23 +51,23 @@ sleep:
 
 @ Set the framebuffer position to r0
 set_clcd_framebuffer_ptr:
-  push {r11, fp}
+  push {r10, fp}
   mov fp, sp
   @ Setup the framebuffer position
-  ldr r11, =0x10120000 @ clcd reg base pos
-  str r0, [r11, #0x10]
-  pop {r11, fp}
+  ldr r10, =0x10120000 @ clcd reg base pos
+  str r0, [r10, #0x10]
+  pop {r10, fp}
   mov pc, lr
 
 clcd_power_on:
-  push {r11, fp, lr}
+  push {r10, fp, lr}
   mov fp, sp
 
   @ Power on the CLCD
-  ldr r11, =0x10120000 @ clcd reg base pos
-  ldr r4, [r11, #0x18]
+  ldr r10, =0x10120000 @ clcd reg base pos
+  ldr r4, [r10, #0x18]
   orr r4, #1
-  str r4, [r11, #0x18]
+  str r4, [r10, #0x18]
 
   @ We need to sleep for a bit again whilst the CLCD stabilises
   mov r0, #0x2000
@@ -75,52 +75,77 @@ clcd_power_on:
 
   @ Now power on
   orr r4, #0x400
-  str r4, [r11, #0x18]
+  str r4, [r10, #0x18]
 
-  pop {r11, fp, pc}
+  pop {r10, fp, pc}
 
 @ Setup the CLCD clocks for 800 x 600 VGA display
 setup_clcd_clocks:
-  push {r11, fp}
-  ldr r11, =0x10120000 
+  push {r10, fp}
+  ldr r10, =0x10120000 
   ldr r0, =0x1313a4c4;
-  str r0, [r11]
+  str r0, [r10]
   ldr r0, =0x0505f657;
-  str r0, [r11, #0x04]
+  str r0, [r10, #0x04]
   ldr r0, =0x071f1800;
-  str r0, [r11, #0x08]
-  ldr r0, [r11, #0x18]
+  str r0, [r10, #0x08]
+  ldr r0, [r10, #0x18]
   ldr r1, =0x82b; /* control bits */
   orr r0, r1
-  str r0, [r11, #0x18]
-  pop {r11, fp}
+  str r0, [r10, #0x18]
+  pop {r10, fp}
   mov pc, lr
 
 
 _start:
+
+  .equiv FRAMEBUFFER_PTR, 0x01000000
+
   @ Set up stack pointer
 	mov sp, #0x07000000
   mov fp, sp
 
-  mov r0, #0x01000000
+  LDR r0, =(0xF << 20)
+  MCR p15, 0, r0, c1, c0, 2
+  MOV r3, #0x40000000 
+  VMSR FPEXC, r3
+
+
+  mov r0, #FRAMEBUFFER_PTR
   bl set_clcd_framebuffer_ptr
   bl clcd_power_on
   bl setup_clcd_clocks
 
-mov r0, #0x01000000 @ framebuffer pos
-ldr r1, =0x00ffffff
-ldr r3, =3000000
-ldr r11, =0x10120000 @ clcd reg base pos
-draw_loop:
+  @ Initialise memory for mandelbrot
+	mov sp, #0x07000000
+  mov fp, sp
+  @ Framebuffer (fp + 0x00)
+  mov r0, #FRAMEBUFFER_PTR
+  str r0, [fp]
+  mov r0, #800
+  str r0, [fp, #0x04]
+  mov r0, #600
+  str r0, [fp, #0x08]
+  @ Scaling (fp + 0x0c)
+  vmov.f32 s0, #-2.0
+  vstr.f32 s0, [fp, #0x0c]
+  vmov.f32 s0, #2.0
+  vstr.f32 s0, [fp, #0x10]
+  vmov.f32 s0, #2.0
+  vstr.f32 s0, [fp, #0x14]
+  vmov.f32 s0, #-2.0
+  vstr.f32 s0, [fp, #0x18]
 
-  @ Populate framebuffer
-  mov r2, #0
+  mov r4, #4
 
-  loop:
-  str r2, [r0, r2]
-  add r2, #4
-  cmp r2, r3
+  draw_loop:
 
-  bne loop
+    @ Call mandelbrot
+    mov r0, fp
+    mov r1, #0x0c
+    add r1, fp
+    mov r2, r4
+    bl mandelbrot
 
-  b draw_loop
+    add r4, #4
+    b draw_loop

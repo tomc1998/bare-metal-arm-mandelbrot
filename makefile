@@ -1,7 +1,7 @@
 CC=arm-linux-gnueabi-gcc
 LD=arm-linux-gnueabi-ld
 
-CFLAGS=-ansi -g -pedantic -Wall -Wextra -march=armv6 -msoft-float -fPIC -mapcs-frame
+CFLAGS=-ansi -g -pedantic -Wall -Wextra -march=armv7-a -mfpu=neon -fPIC -mapcs-frame
 LDFLAGS=-N -Ttext=0x10000
 
 .PHONY: clean
@@ -17,4 +17,4 @@ clean:
 .o.elf:
 		$(LD) $(LDFLAGS) -o $@ $^
 
-kernel.elf: print.o math.o
+kernel.elf: print.o math.o complex.o mandelbrot.o

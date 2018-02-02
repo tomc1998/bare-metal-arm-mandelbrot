@@ -3,6 +3,7 @@
 @ Div a0 by a1, and return the result in a0 with the remainder in a1
 div_i:
   push {fp}
+  mov fp, sp
 
   mov r2, #0
 

@@ -1,1 +1,1 @@
-qemu-system-arm -M versatilepb -cpu arm1176 -serial stdio -kernel kernel.elf
+qemu-system-arm -M versatilepb -cpu cortex-a8 -serial stdio -kernel kernel.elf
