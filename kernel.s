@@ -47,52 +47,51 @@ sleep:
   bne sleep_loop
   mov pc, lr
 
+@ Set the framebuffer position to r0
+set_clcd_framebuffer_ptr:
+  @ Setup the framebuffer position
+  ldr r12, =0x10120000 @ clcd reg base pos
+  str r0, [r12, #0x10]
+  mov pc, lr
+
 _start:
   @ Set up stack pointer
-	mov sp, #0x08000000
+	mov sp, #0x07000000
   mov fp, sp
 
-  @ Setup the framebuffer position
-  ldr r13, =0x10120000 @ clcd reg base pos
-  mov r0, #0x01000000 @ framebuffer pos
-  str r0, [r13, #0x10]
+  mov r0, #0x01000000
+  bl set_clcd_framebuffer_ptr
 
-  @ Load SYS_CLCD register & turn on
-  ldr r13, =0x10000050
-  mov r4, #0x3C
-  str r4, [r13]
-
-  @ Sleep for a bit before using clcd...
-  mov r0, #0x2000
-  bl sleep
   @ Power on the CLCD
-  ldr r13, =0x10120000 @ clcd reg base pos
-  ldr r4, [r13, #0x18]
+  ldr r12, =0x10120000 @ clcd reg base pos
+  ldr r4, [r12, #0x18]
   orr r4, #1
-  str r4, [r13, #0x18]
+  str r4, [r12, #0x18]
+
   @ We need to sleep for a bit again whilst the CLCD stabilises
   mov r0, #0x2000
   bl sleep
+
   @ Now power on
   orr r4, #0x400
-  str r4, [r13, #0x18]
+  str r4, [r12, #0x18]
 
-  ldr r13, =0x10120000 
+  ldr r12, =0x10120000 
   ldr r0, =0x1313a4c4;
-  str r0, [r13]
+  str r0, [r12]
   ldr r0, =0x0505f657;
-  str r0, [r13, #0x04]
+  str r0, [r12, #0x04]
   ldr r0, =0x071f1800;
-  str r0, [r13, #0x08]
-  ldr r0, [r13, #0x18]
+  str r0, [r12, #0x08]
+  ldr r0, [r12, #0x18]
   ldr r1, =0x82b; /* control bits */
   orr r0, r1
-  str r0, [r13, #0x18]
+  str r0, [r12, #0x18]
 
 mov r0, #0x01000000 @ framebuffer pos
 ldr r1, =0x00ffffff
 ldr r3, =3000000
-ldr r13, =0x10120000 @ clcd reg base pos
+ldr r12, =0x10120000 @ clcd reg base pos
 draw_loop:
 
   @ Populate framebuffer

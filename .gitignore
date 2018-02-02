@@ -1,2 +1,3 @@
 .projectile
 kernel.elf
+*.o
