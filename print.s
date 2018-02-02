@@ -2,7 +2,8 @@
 
 @ Print an integer stored in r0 to UART0
 print_i:
-  push {r4, r5, r12, lr}
+  push {r4, r5, r12, fp, lr}
+  mov fp, sp
 
   @ Reserve space for the number as a string - we're going to buffer the number
   @ here then reverse
@@ -38,3 +39,5 @@ print_i:
   add sp, #16
 
   pop {r4, r5, r12, pc}
+
+print_endl:

@@ -2,6 +2,7 @@
 
 @ Div a0 by a1, and return the result in a0 with the remainder in a1
 div_i:
+  push {fp}
 
   mov r2, #0
 
@@ -15,6 +16,8 @@ div_i:
   add r0, r1
   mov r1, r0
   mov r0, r2
+
+  pop {fp}
 
   mov pc, lr
 

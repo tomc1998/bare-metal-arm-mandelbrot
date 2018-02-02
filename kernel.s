@@ -41,26 +41,27 @@
 
 @ Function to sleep for r0 cycles
 sleep:
+  push {fp}
   sleep_loop:
   nop
   subs r0, #1
   bne sleep_loop
+  pop {fp}
   mov pc, lr
 
 @ Set the framebuffer position to r0
 set_clcd_framebuffer_ptr:
+  push {r12, fp}
+  mov fp, sp
   @ Setup the framebuffer position
   ldr r12, =0x10120000 @ clcd reg base pos
   str r0, [r12, #0x10]
+  pop {r12, fp}
   mov pc, lr
 
-_start:
-  @ Set up stack pointer
-	mov sp, #0x07000000
+clcd_power_on:
+  push {r12, fp, lr}
   mov fp, sp
-
-  mov r0, #0x01000000
-  bl set_clcd_framebuffer_ptr
 
   @ Power on the CLCD
   ldr r12, =0x10120000 @ clcd reg base pos
@@ -76,6 +77,11 @@ _start:
   orr r4, #0x400
   str r4, [r12, #0x18]
 
+  pop {r12, fp, pc}
+
+@ Setup the CLCD clocks for 800 x 600 VGA display
+setup_clcd_clocks:
+  push {r12, fp}
   ldr r12, =0x10120000 
   ldr r0, =0x1313a4c4;
   str r0, [r12]
@@ -87,6 +93,19 @@ _start:
   ldr r1, =0x82b; /* control bits */
   orr r0, r1
   str r0, [r12, #0x18]
+  pop {r12, fp}
+  mov pc, lr
+
+
+_start:
+  @ Set up stack pointer
+	mov sp, #0x07000000
+  mov fp, sp
+
+  mov r0, #0x01000000
+  bl set_clcd_framebuffer_ptr
+  bl clcd_power_on
+  bl setup_clcd_clocks
 
 mov r0, #0x01000000 @ framebuffer pos
 ldr r1, =0x00ffffff
